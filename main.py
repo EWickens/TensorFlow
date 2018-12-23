@@ -6,7 +6,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 # Initialize two constants
@@ -53,6 +52,7 @@ def load_data(data_directory):
             labels.append(int(d))
     return images, labels
 
+
 # Plots the amount of images for a given label
 def plot_labels(labels):
     # Get the unique labels
@@ -82,6 +82,7 @@ def plot_labels(labels):
     # Show the plot
     plt.show()
 
+
 def plot_random_images(images):
     # Determine the (random) indexes of the images that you want to see
     traffic_signs = [300, 2250, 3650, 4000]
@@ -90,12 +91,14 @@ def plot_random_images(images):
     for i in range(len(traffic_signs)):
         plt.subplot(1, 4, i + 1)
         plt.axis('off')
-        plt.imshow(images[traffic_signs[i]], cmap='gray') # cmap is specified as gray as it usually uses a thermal heatmap
+        plt.imshow(images[traffic_signs[i]],
+                   cmap='gray')  # cmap is specified as gray as it usually uses a thermal heatmap
         plt.subplots_adjust(wspace=0.5)
         plt.show()
         print("shape: {0}, min: {1}, max: {2}".format(images[traffic_signs[i]].shape,
-                                                  images[traffic_signs[i]].min(),
-                                                  images[traffic_signs[i]].max()))
+                                                      images[traffic_signs[i]].min(),
+                                                      images[traffic_signs[i]].max()))
+
 
 # Resizes all the images to be 28x28 pixels
 # Using the skimage transform library
@@ -104,6 +107,7 @@ def resize_images(images):
     images28 = [transform.resize(image, (28, 28)) for image in images]
 
     return images28
+
 
 def colour_to_gray(images28):
     # Convert `images28` to an array as rgb2gray expects an array
@@ -115,6 +119,44 @@ def colour_to_gray(images28):
     return grayImages28
 
 
+def tensor_init():
+    # A tensor in this case is basically an image
+
+    # Initialize placeholders AKA Uninitialized variables
+    x = tf.placeholder(dtype=tf.float32, shape=[None, 28, 28])
+    y = tf.placeholder(dtype=tf.int32, shape=[None]) # True array
+
+    # Flatten the input data into an array of type [None, 784] instead of [None,28,28]
+    # From my understanding it takes a three dimensional array and makes it into a two
+    # dimension array
+
+    images_flat = tf.contrib.layers.flatten(x)
+
+    # Logits are outputs of the neural network before going through softmax function
+    # Which normalises the output?
+
+    # Fully connected layer [None ,62] ( Since there are 62 different road signs )
+    logits = tf.contrib.layers.fully_connected(images_flat, 62, tf.nn.relu)
+
+    # Define a loss function (How far a model is from the correct result, tries to minimize loss)
+    # Cross Entropy - Measures how similar how two distributions are
+    # As cross entropy decreases P(truth) and q (predicted result) are more similar
+    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y,
+                                                                         logits=logits))
+    # Define an optimizer - Optimizes the output using the given loss function
+    train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+
+    # Convert logits to label indexes
+    correct_pred = tf.argmax(logits, 1)
+
+    # Define an accuracy metric
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+    print("images_flat: ", images_flat)
+    print("logits: ", logits)
+    print("loss: ", loss)
+    print("predicted_labels: ", correct_pred)
+    print("accuracy: ", accuracy)
 
 ROOT_PATH = "C:\\Users\\Eoinw\\Dropbox\\College\\Year 3\\Programming for Data Analytics\\Labs\\Tensor\\BelgiumSigns"
 train_data_directory = os.path.join(ROOT_PATH, "BelgiumTSC_Training/Training")
@@ -129,3 +171,4 @@ grayImages28 = colour_to_gray(images28)
 
 plot_random_images(grayImages28)
 
+tensor_init()
